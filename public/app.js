@@ -7,6 +7,7 @@ let pendingFile = null;
 // ============ Init ============
 document.addEventListener('DOMContentLoaded', () => {
   setupNavigation();
+  setupMobileNav();
   setupYearSelectors();
   loadCategories().then(() => {
     loadDashboard();
@@ -45,10 +46,7 @@ function setupNavigation() {
     link.addEventListener('click', (e) => {
       e.preventDefault();
       const section = link.dataset.section;
-      document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
-      link.classList.add('active');
-      document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-      document.getElementById(`section-${section}`).classList.add('active');
+      navigateToSection(section);
 
       // Refresh data on section switch
       if (section === 'dashboard') loadDashboard();
@@ -56,8 +54,108 @@ function setupNavigation() {
       if (section === 'journal') loadJournal();
       if (section === 'journal-pdfs') loadJournalPdfs();
       if (section === 'categories') renderCategories();
+
+      window.scrollTo(0, 0);
     });
   });
+}
+
+// ============ Mobile Navigation ============
+function isMobile() {
+  return window.innerWidth <= 768;
+}
+
+function setupMobileNav() {
+  const hamburger = document.getElementById('hamburger');
+  const sidebar = document.getElementById('sidebar');
+  const overlay = document.getElementById('sidebar-overlay');
+
+  // Hamburger toggle
+  hamburger?.addEventListener('click', () => {
+    hamburger.classList.toggle('active');
+    sidebar.classList.toggle('open');
+    overlay.classList.toggle('active');
+  });
+
+  // Close sidebar on overlay click
+  overlay?.addEventListener('click', () => {
+    hamburger.classList.remove('active');
+    sidebar.classList.remove('open');
+    overlay.classList.remove('active');
+  });
+
+  // Close sidebar when clicking a nav link on mobile
+  document.querySelectorAll('.sidebar .nav-link').forEach(link => {
+    link.addEventListener('click', () => {
+      if (isMobile()) {
+        hamburger.classList.remove('active');
+        sidebar.classList.remove('open');
+        overlay.classList.remove('active');
+      }
+    });
+  });
+
+  // Bottom navigation
+  document.querySelectorAll('.bottom-nav-item').forEach(item => {
+    item.addEventListener('click', (e) => {
+      e.preventDefault();
+      const section = item.dataset.section;
+
+      // "More" opens sidebar
+      if (section === 'more') {
+        hamburger.classList.add('active');
+        sidebar.classList.add('open');
+        overlay.classList.add('active');
+        return;
+      }
+
+      // Update bottom nav active state
+      document.querySelectorAll('.bottom-nav-item').forEach(i => i.classList.remove('active'));
+      item.classList.add('active');
+
+      // Update sidebar active state
+      document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+      const sidebarLink = document.querySelector(`.nav-link[data-section="${section}"]`);
+      if (sidebarLink) sidebarLink.classList.add('active');
+
+      // Show section
+      document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+      document.getElementById(`section-${section}`).classList.add('active');
+
+      // Refresh data
+      if (section === 'dashboard') loadDashboard();
+      if (section === 'documents') loadDocuments();
+      if (section === 'journal') loadJournal();
+      if (section === 'journal-pdfs') loadJournalPdfs();
+      if (section === 'categories') renderCategories();
+
+      // Scroll to top
+      window.scrollTo(0, 0);
+    });
+  });
+}
+
+function navigateToSection(section) {
+  // Update sidebar
+  document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+  const sidebarLink = document.querySelector(`.nav-link[data-section="${section}"]`);
+  if (sidebarLink) sidebarLink.classList.add('active');
+
+  // Update bottom nav
+  document.querySelectorAll('.bottom-nav-item').forEach(i => i.classList.remove('active'));
+  const bottomItem = document.querySelector(`.bottom-nav-item[data-section="${section}"]`);
+  if (bottomItem) bottomItem.classList.add('active');
+
+  // Show section
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.getElementById(`section-${section}`).classList.add('active');
+
+  // Close mobile sidebar
+  if (isMobile()) {
+    document.getElementById('hamburger')?.classList.remove('active');
+    document.getElementById('sidebar')?.classList.remove('open');
+    document.getElementById('sidebar-overlay')?.classList.remove('active');
+  }
 }
 
 // ============ Year selectors ============
@@ -298,13 +396,27 @@ function renderDocuments() {
     );
   }
 
+  // Mobile cards container
+  let mobileContainer = document.getElementById('documents-mobile-cards');
+  if (!mobileContainer) {
+    mobileContainer = document.createElement('div');
+    mobileContainer.id = 'documents-mobile-cards';
+    mobileContainer.className = 'mobile-card';
+    const tableWrapper = document.querySelector('#section-documents .table-wrapper');
+    tableWrapper.parentNode.insertBefore(mobileContainer, tableWrapper);
+    tableWrapper.classList.add('desktop-table');
+  }
+
   if (filtered.length === 0) {
     tbody.innerHTML = '';
+    mobileContainer.innerHTML = '';
     empty.style.display = '';
     return;
   }
 
   empty.style.display = 'none';
+
+  // Desktop table
   tbody.innerHTML = filtered.map(d => `
     <tr>
       <td>${d.date || '-'}</td>
@@ -322,6 +434,40 @@ function renderDocuments() {
         <button class="btn btn-danger btn-sm" onclick="deleteDocument('${d.id}')">Zmazať</button>
       </td>
     </tr>
+  `).join('');
+
+  // Mobile cards
+  mobileContainer.innerHTML = filtered.map(d => `
+    <div class="mobile-card" style="display:block">
+      <div class="mobile-card-header">
+        ${d.category_name
+          ? `<span class="badge badge-categorized">${d.category_name}</span>`
+          : `<span class="badge badge-uncategorized">Nezaradený</span>`}
+      </div>
+      <div class="mobile-card-row">
+        <span class="mobile-card-label">Dátum</span>
+        <span class="mobile-card-value">${d.date || '-'}</span>
+      </div>
+      <div class="mobile-card-row">
+        <span class="mobile-card-label">Súbor</span>
+        <span class="mobile-card-value"><a href="/uploads/documents/${d.filename}" target="_blank" class="file-link">${d.original_name}</a></span>
+      </div>
+      ${d.partner ? `<div class="mobile-card-row">
+        <span class="mobile-card-label">Partner</span>
+        <span class="mobile-card-value">${d.partner}</span>
+      </div>` : ''}
+      <div class="mobile-card-row">
+        <span class="mobile-card-label">Suma</span>
+        <span class="mobile-card-value"><strong>${d.amount ? formatMoney(d.amount) : '-'}</strong></span>
+      </div>
+      ${d.account_md && d.account_d ? `<div class="mobile-card-row">
+        <span class="mobile-card-label">Účty</span>
+        <span class="mobile-card-value">MD ${d.account_md} / D ${d.account_d}</span>
+      </div>` : ''}
+      <div class="mobile-card-actions">
+        <button class="btn btn-danger btn-sm" onclick="deleteDocument('${d.id}')">Zmazať</button>
+      </div>
+    </div>
   `).join('');
 }
 
@@ -409,8 +555,20 @@ function renderJournal() {
   const empty = document.getElementById('journal-empty');
   const totalEl = document.getElementById('journal-total');
 
+  // Mobile cards container
+  let mobileContainer = document.getElementById('journal-mobile-cards');
+  if (!mobileContainer) {
+    mobileContainer = document.createElement('div');
+    mobileContainer.id = 'journal-mobile-cards';
+    mobileContainer.className = 'mobile-card';
+    const tableWrapper = document.querySelector('#section-journal .table-wrapper');
+    tableWrapper.parentNode.insertBefore(mobileContainer, tableWrapper);
+    tableWrapper.classList.add('desktop-table');
+  }
+
   if (journalEntries.length === 0) {
     tbody.innerHTML = '';
+    mobileContainer.innerHTML = '';
     empty.style.display = '';
     totalEl.textContent = '0.00';
     return;
@@ -419,6 +577,7 @@ function renderJournal() {
   empty.style.display = 'none';
   let total = 0;
 
+  // Desktop table
   tbody.innerHTML = journalEntries.map((entry, i) => {
     total += entry.amount;
     return `
@@ -439,6 +598,45 @@ function renderJournal() {
   }).join('');
 
   totalEl.textContent = formatMoney(total);
+
+  // Mobile cards
+  let mobileTotal = 0;
+  mobileContainer.innerHTML = journalEntries.map((entry, i) => {
+    mobileTotal += entry.amount;
+    return `
+      <div class="mobile-card" style="display:block">
+        <div class="mobile-card-header">
+          #${i + 1} — ${entry.description || entry.category_name || 'Bez popisu'}
+        </div>
+        <div class="mobile-card-row">
+          <span class="mobile-card-label">Dátum</span>
+          <span class="mobile-card-value">${entry.date}</span>
+        </div>
+        <div class="mobile-card-row">
+          <span class="mobile-card-label">Účty</span>
+          <span class="mobile-card-value"><strong>MD ${entry.account_md}</strong> / <strong>D ${entry.account_d}</strong></span>
+        </div>
+        <div class="mobile-card-row">
+          <span class="mobile-card-label">Suma</span>
+          <span class="mobile-card-value"><strong>${formatMoney(entry.amount)}</strong></span>
+        </div>
+        ${entry.partner ? `<div class="mobile-card-row">
+          <span class="mobile-card-label">Partner</span>
+          <span class="mobile-card-value">${entry.partner}</span>
+        </div>` : ''}
+        <div class="mobile-card-actions">
+          <button class="btn btn-danger btn-sm" onclick="deleteJournalEntry(${entry.id})">Zmazať</button>
+        </div>
+      </div>
+    `;
+  }).join('') + `
+    <div class="mobile-card" style="display:block;background:#f8fafc;border:2px solid var(--border)">
+      <div class="mobile-card-row">
+        <span class="mobile-card-label" style="font-size:0.9rem"><strong>Spolu</strong></span>
+        <span class="mobile-card-value" style="font-size:1.1rem"><strong>${formatMoney(mobileTotal)}</strong></span>
+      </div>
+    </div>
+  `;
 }
 
 async function deleteJournalEntry(id) {

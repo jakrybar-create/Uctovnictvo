@@ -2,12 +2,25 @@
 <html lang="sk">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Účtovníctvo">
+  <meta name="theme-color" content="#1e293b">
   <title>Účtovníctvo s.r.o.</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <nav class="sidebar">
+  <!-- Mobile top bar -->
+  <header class="mobile-header">
+    <button class="hamburger" id="hamburger" aria-label="Menu">
+      <span></span><span></span><span></span>
+    </button>
+    <h1 class="mobile-title">Účtovníctvo <small>s.r.o.</small></h1>
+  </header>
+  <div class="sidebar-overlay" id="sidebar-overlay"></div>
+
+  <nav class="sidebar" id="sidebar">
     <div class="sidebar-header">
       <h1>Účtovníctvo</h1>
       <span class="subtitle">s.r.o.</span>
@@ -75,9 +88,9 @@
       <h2>Nahrať účtovný doklad</h2>
       <div class="upload-area" id="upload-area">
         <div class="upload-icon">&#8593;</div>
-        <p>Pretiahnite súbor sem alebo kliknite pre výber</p>
+        <p>Kliknite pre výber súboru alebo odfotenie</p>
         <p class="upload-hint">PDF, JPG, PNG (max 20 MB)</p>
-        <input type="file" id="file-input" accept=".pdf,.jpg,.jpeg,.png,.gif,.webp" hidden>
+        <input type="file" id="file-input" accept=".pdf,.jpg,.jpeg,.png,.gif,.webp,image/*" capture="environment" hidden>
       </div>
       <div id="upload-progress" class="upload-progress" style="display:none">
         <div class="progress-bar"><div class="progress-fill"></div></div>
@@ -370,6 +383,30 @@
       </div>
     </section>
   </main>
+
+  <!-- Mobile bottom navigation -->
+  <nav class="bottom-nav" id="bottom-nav">
+    <a href="#" class="bottom-nav-item active" data-section="dashboard">
+      <span class="bottom-nav-icon">&#9632;</span>
+      <span class="bottom-nav-label">Prehľad</span>
+    </a>
+    <a href="#" class="bottom-nav-item" data-section="upload">
+      <span class="bottom-nav-icon">&#8593;</span>
+      <span class="bottom-nav-label">Nahrať</span>
+    </a>
+    <a href="#" class="bottom-nav-item" data-section="documents">
+      <span class="bottom-nav-icon">&#128196;</span>
+      <span class="bottom-nav-label">Doklady</span>
+    </a>
+    <a href="#" class="bottom-nav-item" data-section="journal">
+      <span class="bottom-nav-icon">&#128214;</span>
+      <span class="bottom-nav-label">Denník</span>
+    </a>
+    <a href="#" class="bottom-nav-item" data-section="more">
+      <span class="bottom-nav-icon">&#8943;</span>
+      <span class="bottom-nav-label">Viac</span>
+    </a>
+  </nav>
 
   <script src="app.js"></script>
 </body>
