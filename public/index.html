@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Účtovníctvo s.r.o.</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <nav class="sidebar">
+    <div class="sidebar-header">
+      <h1>Účtovníctvo</h1>
+      <span class="subtitle">s.r.o.</span>
+    </div>
+    <ul class="nav-links">
+      <li><a href="#" class="nav-link active" data-section="dashboard">
+        <span class="icon">&#9632;</span> Prehľad
+      </a></li>
+      <li><a href="#" class="nav-link" data-section="upload">
+        <span class="icon">&#8593;</span> Nahrať doklad
+      </a></li>
+      <li><a href="#" class="nav-link" data-section="documents">
+        <span class="icon">&#128196;</span> Doklady
+      </a></li>
+      <li><a href="#" class="nav-link" data-section="journal">
+        <span class="icon">&#128214;</span> Účtovný denník
+      </a></li>
+      <li><a href="#" class="nav-link" data-section="journal-pdfs">
+        <span class="icon">&#128451;</span> Archív denníkov
+      </a></li>
+      <li><a href="#" class="nav-link" data-section="categories">
+        <span class="icon">&#9881;</span> Kategórie
+      </a></li>
+    </ul>
+  </nav>
+
+  <main class="content">
+    <!-- Dashboard -->
+    <section id="section-dashboard" class="section active">
+      <h2>Prehľad</h2>
+      <div class="year-selector">
+        <label>Rok: </label>
+        <select id="stats-year"></select>
+      </div>
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-value" id="stat-documents">0</div>
+          <div class="stat-label">Doklady</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="stat-entries">0</div>
+          <div class="stat-label">Záznamy v denníku</div>
+        </div>
+        <div class="stat-card revenue">
+          <div class="stat-value" id="stat-revenue">0 €</div>
+          <div class="stat-label">Výnosy</div>
+        </div>
+        <div class="stat-card expense">
+          <div class="stat-value" id="stat-expenses">0 €</div>
+          <div class="stat-label">Náklady</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="stat-profit">0 €</div>
+          <div class="stat-label">Výsledok hospodárenia</div>
+        </div>
+        <div class="stat-card warning" id="stat-uncategorized-card" style="display:none">
+          <div class="stat-value" id="stat-uncategorized">0</div>
+          <div class="stat-label">Nezaradené doklady</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Upload -->
+    <section id="section-upload" class="section">
+      <h2>Nahrať účtovný doklad</h2>
+      <div class="upload-area" id="upload-area">
+        <div class="upload-icon">&#8593;</div>
+        <p>Pretiahnite súbor sem alebo kliknite pre výber</p>
+        <p class="upload-hint">PDF, JPG, PNG (max 20 MB)</p>
+        <input type="file" id="file-input" accept=".pdf,.jpg,.jpeg,.png,.gif,.webp" hidden>
+      </div>
+      <div id="upload-progress" class="upload-progress" style="display:none">
+        <div class="progress-bar"><div class="progress-fill"></div></div>
+        <p class="progress-text">Nahráva sa...</p>
+      </div>
+      <div id="upload-result" style="display:none">
+        <h3>Doklad nahraný - priraďte údaje</h3>
+        <form id="document-form" class="document-form">
+          <input type="hidden" id="doc-id">
+          <div class="form-row">
+            <div class="form-group">
+              <label>Kategória *</label>
+              <select id="doc-category" required>
+                <option value="">-- Vyberte kategóriu --</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Suma (€) *</label>
+              <input type="number" id="doc-amount" step="0.01" min="0" required>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Dátum dokladu</label>
+              <input type="date" id="doc-date">
+            </div>
+            <div class="form-group">
+              <label>Číslo dokladu</label>
+              <input type="text" id="doc-number">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Partner (dodávateľ/odberateľ)</label>
+              <input type="text" id="doc-partner">
+            </div>
+            <div class="form-group">
+              <label>Popis</label>
+              <input type="text" id="doc-description">
+            </div>
+          </div>
+          <div class="account-preview" id="account-preview" style="display:none">
+            <span class="label">Predkontácia:</span>
+            <span class="md">MD: <strong id="preview-md"></strong></span>
+            <span class="separator">/</span>
+            <span class="d">D: <strong id="preview-d"></strong></span>
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Uložiť a zaúčtovať</button>
+            <button type="button" class="btn btn-secondary" id="btn-skip">Uložiť bez kategórie</button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <!-- Documents list -->
+    <section id="section-documents" class="section">
+      <h2>Nahrané doklady</h2>
+      <div class="filter-bar">
+        <select id="filter-category">
+          <option value="">Všetky kategórie</option>
+        </select>
+        <input type="text" id="filter-search" placeholder="Hľadať...">
+      </div>
+      <div class="table-wrapper">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Dátum</th>
+              <th>Č. dokladu</th>
+              <th>Súbor</th>
+              <th>Kategória</th>
+              <th>Partner</th>
+              <th>Suma</th>
+              <th>MD / D</th>
+              <th>Akcie</th>
+            </tr>
+          </thead>
+          <tbody id="documents-tbody"></tbody>
+        </table>
+      </div>
+      <p class="empty-state" id="documents-empty" style="display:none">Zatiaľ neboli nahrané žiadne doklady.</p>
+    </section>
+
+    <!-- Journal -->
+    <section id="section-journal" class="section">
+      <h2>Účtovný denník</h2>
+      <div class="journal-controls">
+        <div class="filter-bar">
+          <select id="journal-year"></select>
+          <select id="journal-month">
+            <option value="">Celý rok</option>
+            <option value="1">Január</option>
+            <option value="2">Február</option>
+            <option value="3">Marec</option>
+            <option value="4">Apríl</option>
+            <option value="5">Máj</option>
+            <option value="6">Jún</option>
+            <option value="7">Júl</option>
+            <option value="8">August</option>
+            <option value="9">September</option>
+            <option value="10">Október</option>
+            <option value="11">November</option>
+            <option value="12">December</option>
+          </select>
+          <button class="btn btn-secondary" id="btn-add-entry">+ Manuálny zápis</button>
+        </div>
+      </div>
+      <div class="table-wrapper">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>P.č.</th>
+              <th>Dátum</th>
+              <th>Č. dokladu</th>
+              <th>Popis</th>
+              <th>Partner</th>
+              <th>MD</th>
+              <th>D</th>
+              <th>Suma (€)</th>
+              <th>Akcie</th>
+            </tr>
+          </thead>
+          <tbody id="journal-tbody"></tbody>
+          <tfoot>
+            <tr class="total-row">
+              <td colspan="7"><strong>Spolu</strong></td>
+              <td><strong id="journal-total">0.00</strong></td>
+              <td></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+      <p class="empty-state" id="journal-empty" style="display:none">Denník neobsahuje žiadne záznamy.</p>
+
+      <!-- Manual entry modal -->
+      <div class="modal" id="modal-entry" style="display:none">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h3>Nový zápis do denníka</h3>
+            <button class="modal-close" id="modal-entry-close">&times;</button>
+          </div>
+          <form id="entry-form">
+            <div class="form-row">
+              <div class="form-group">
+                <label>Dátum *</label>
+                <input type="date" id="entry-date" required>
+              </div>
+              <div class="form-group">
+                <label>Číslo dokladu</label>
+                <input type="text" id="entry-number">
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Kategória (predvyplní účty)</label>
+                <select id="entry-category">
+                  <option value="">-- Bez kategórie --</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Suma (€) *</label>
+                <input type="number" id="entry-amount" step="0.01" min="0" required>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Účet MD *</label>
+                <input type="text" id="entry-md" required placeholder="napr. 501">
+              </div>
+              <div class="form-group">
+                <label>Účet D *</label>
+                <input type="text" id="entry-d" required placeholder="napr. 321">
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Partner</label>
+                <input type="text" id="entry-partner">
+              </div>
+              <div class="form-group">
+                <label>Popis</label>
+                <input type="text" id="entry-description">
+              </div>
+            </div>
+            <div class="form-actions">
+              <button type="submit" class="btn btn-primary">Pridať zápis</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </section>
+
+    <!-- Journal PDFs archive -->
+    <section id="section-journal-pdfs" class="section">
+      <h2>Archív účtovných denníkov (PDF)</h2>
+      <p class="section-desc">Nahrajte PDF účtovných denníkov z minulých rokov pre archiváciu.</p>
+      <div class="upload-area" id="journal-upload-area">
+        <div class="upload-icon">&#128451;</div>
+        <p>Pretiahnite PDF súbor sem alebo kliknite</p>
+        <p class="upload-hint">Len PDF (max 50 MB)</p>
+        <input type="file" id="journal-file-input" accept=".pdf" hidden>
+      </div>
+      <div id="journal-upload-form" style="display:none">
+        <form id="journal-pdf-form" class="document-form">
+          <div class="form-row">
+            <div class="form-group">
+              <label>Rok</label>
+              <select id="journal-pdf-year"></select>
+            </div>
+            <div class="form-group">
+              <label>Popis</label>
+              <input type="text" id="journal-pdf-desc" placeholder="napr. Účtovný denník 2023">
+            </div>
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Nahrať denník</button>
+          </div>
+        </form>
+      </div>
+      <h3 style="margin-top:2rem">Nahrané denníky</h3>
+      <div class="table-wrapper">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Rok</th>
+              <th>Súbor</th>
+              <th>Popis</th>
+              <th>Nahraný</th>
+              <th>Akcie</th>
+            </tr>
+          </thead>
+          <tbody id="journal-pdfs-tbody"></tbody>
+        </table>
+      </div>
+      <p class="empty-state" id="journal-pdfs-empty" style="display:none">Zatiaľ neboli nahrané žiadne denníky.</p>
+    </section>
+
+    <!-- Categories management -->
+    <section id="section-categories" class="section">
+      <h2>Kategórie dokladov</h2>
+      <p class="section-desc">Prehľad preddefinovaných kategórií s prednastavenými účtami MD a D.</p>
+      <button class="btn btn-primary" id="btn-add-category" style="margin-bottom:1rem">+ Pridať kategóriu</button>
+      <div class="table-wrapper">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Názov</th>
+              <th>Účet MD</th>
+              <th>Účet D</th>
+              <th>Popis</th>
+              <th>Akcie</th>
+            </tr>
+          </thead>
+          <tbody id="categories-tbody"></tbody>
+        </table>
+      </div>
+
+      <!-- Add category modal -->
+      <div class="modal" id="modal-category" style="display:none">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h3>Nová kategória</h3>
+            <button class="modal-close" id="modal-category-close">&times;</button>
+          </div>
+          <form id="category-form">
+            <div class="form-group">
+              <label>Názov kategórie *</label>
+              <input type="text" id="cat-name" required placeholder="napr. Prijaté faktúry - reklama">
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Účet MD *</label>
+                <input type="text" id="cat-md" required placeholder="napr. 518">
+              </div>
+              <div class="form-group">
+                <label>Účet D *</label>
+                <input type="text" id="cat-d" required placeholder="napr. 321">
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Popis</label>
+              <input type="text" id="cat-desc" placeholder="Voliteľný popis kategórie">
+            </div>
+            <div class="form-actions">
+              <button type="submit" class="btn btn-primary">Pridať</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
