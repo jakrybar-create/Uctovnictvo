@@ -852,7 +852,19 @@ async function deleteCategory(id) {
   }
 }
 
-// ============ Súvaha (Balance Sheet) ============
+// ============ Súvaha (Balance Sheet) - Úč POD 1-01 ============
+function bsRowClass(type) {
+  if (type === 'total') return 'bs-row-total';
+  if (type === 'group') return 'bs-row-group';
+  if (type === 'subgroup') return 'bs-row-subgroup';
+  return 'bs-row-detail';
+}
+
+function bsMoney(val) {
+  if (!val || val === 0) return '';
+  return formatMoney(val);
+}
+
 async function loadBalanceSheet() {
   const year = document.getElementById('bs-year').value;
   try {
@@ -861,36 +873,43 @@ async function loadBalanceSheet() {
     const pasivaTbody = document.getElementById('pasiva-tbody');
     const empty = document.getElementById('bs-empty');
 
-    if (data.aktiva.length === 0 && data.pasiva.length === 0) {
+    const hasData = data.aktiva.some(r => r.brutto || r.netto) || data.pasiva.some(r => r.current);
+
+    if (!hasData) {
       aktivaTbody.innerHTML = '';
       pasivaTbody.innerHTML = '';
       empty.style.display = '';
-      document.querySelector('.financial-statements')?.closest('#section-balance-sheet')?.querySelector('.financial-statements')?.style && (document.querySelector('#section-balance-sheet .financial-statements').style.display = 'none');
+      const bsEl = document.querySelector('#section-balance-sheet .bs-standard');
+      if (bsEl) bsEl.style.display = 'none';
       return;
     }
 
     empty.style.display = 'none';
-    const fsEl = document.querySelector('#section-balance-sheet .financial-statements');
-    if (fsEl) fsEl.style.display = '';
+    const bsEl = document.querySelector('#section-balance-sheet .bs-standard');
+    if (bsEl) bsEl.style.display = '';
 
-    aktivaTbody.innerHTML = data.aktiva.map(a => `
-      <tr>
-        <td><strong>${a.account}</strong></td>
-        <td>${a.name}</td>
-        <td style="text-align:right" class="${a.balance < 0 ? 'negative' : ''}">${formatMoney(a.balance)}</td>
+    aktivaTbody.innerHTML = data.aktiva.map(r => `
+      <tr class="${bsRowClass(r.type)}">
+        <td class="bs-cell-label">${r.label}</td>
+        <td class="bs-cell-name">${r.name}</td>
+        <td class="bs-cell-row">${String(r.row).padStart(3, '0')}</td>
+        <td class="bs-cell-val">${bsMoney(r.brutto)}</td>
+        <td class="bs-cell-val">${bsMoney(r.korekcia)}</td>
+        <td class="bs-cell-val">${bsMoney(r.netto)}</td>
+        <td class="bs-cell-val">${bsMoney(r.prevNetto)}</td>
       </tr>
     `).join('');
 
-    pasivaTbody.innerHTML = data.pasiva.map(p => `
-      <tr>
-        <td><strong>${p.account}</strong></td>
-        <td>${p.name}</td>
-        <td style="text-align:right" class="${p.balance < 0 ? 'negative' : ''}">${formatMoney(p.balance)}</td>
+    pasivaTbody.innerHTML = data.pasiva.map(r => `
+      <tr class="${bsRowClass(r.type)}">
+        <td class="bs-cell-label">${r.label}</td>
+        <td class="bs-cell-name">${r.name}</td>
+        <td class="bs-cell-row">${String(r.row).padStart(3, '0')}</td>
+        <td class="bs-cell-val">${bsMoney(r.current)}</td>
+        <td class="bs-cell-val">${bsMoney(r.prev)}</td>
       </tr>
     `).join('');
 
-    document.getElementById('aktiva-total').textContent = formatMoney(data.aktivaTotal);
-    document.getElementById('pasiva-total').textContent = formatMoney(data.pasivaTotal);
   } catch (err) {
     showToast(err.message, 'error');
   }

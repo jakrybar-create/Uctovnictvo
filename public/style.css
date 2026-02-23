@@ -632,7 +632,7 @@ body {
   font-weight: 600;
 }
 
-/* Financial statements */
+/* Financial statements - general */
 .financial-statements {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -658,6 +658,78 @@ body {
 
 .pasiva-title {
   background: #7c3aed;
+}
+
+/* Standardized balance sheet (Úč POD 1-01) */
+.bs-standard {
+  margin-bottom: 1.5rem;
+}
+
+.bs-table {
+  font-size: 0.82rem;
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.bs-table thead th {
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  padding: 0.35rem 0.5rem;
+  text-align: center;
+  font-size: 0.78rem;
+  white-space: nowrap;
+}
+
+.bs-table tbody td {
+  border: 1px solid #e2e8f0;
+  padding: 0.25rem 0.4rem;
+  vertical-align: top;
+}
+
+.bs-col-label { width: 5.5rem; text-align: center; }
+.bs-col-name { min-width: 14rem; }
+.bs-col-row { width: 3rem; text-align: center; }
+.bs-col-val, .bs-col-prev, .bs-col-values { text-align: right; width: 7rem; }
+
+.bs-cell-label { text-align: center; font-weight: 600; white-space: nowrap; }
+.bs-cell-name { text-align: left; }
+.bs-cell-row { text-align: center; color: #64748b; font-size: 0.78rem; }
+.bs-cell-val { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+/* Row type styling */
+.bs-row-total {
+  background: #1e3a5f;
+  color: #fff;
+  font-weight: 700;
+}
+.bs-row-total td { border-color: #1e3a5f; }
+
+.bs-row-group {
+  background: #e0ecff;
+  font-weight: 700;
+}
+
+.bs-row-subgroup {
+  background: #f0f5ff;
+  font-weight: 600;
+}
+
+.bs-row-detail {
+  background: #fff;
+}
+
+.bs-row-detail:hover {
+  background: #fafbfd;
+}
+
+/* Responsive for mobile */
+@media (max-width: 768px) {
+  .bs-table { font-size: 0.72rem; }
+  .bs-table thead th { padding: 0.2rem 0.25rem; font-size: 0.68rem; }
+  .bs-table tbody td { padding: 0.15rem 0.2rem; }
+  .bs-col-label { width: 3.5rem; }
+  .bs-col-name { min-width: 8rem; }
+  .bs-col-val, .bs-col-prev { width: 5rem; }
 }
 
 .naklady-title {
