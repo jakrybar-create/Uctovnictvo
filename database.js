@@ -1,4 +1,4 @@
-const Database = require('better-sqlite3');
+const initSqlJs = require('sql.js');
 const path = require('path');
 const fs = require('fs');
 
@@ -7,12 +7,87 @@ if (!fs.existsSync(dataDir)) {
   fs.mkdirSync(dataDir, { recursive: true });
 }
 
-const db = new Database(path.join(dataDir, 'accounting.db'));
+const dbPath = path.join(dataDir, 'accounting.db');
+let sqlDb = null;
+let inTransaction = false;
 
-db.pragma('journal_mode = WAL');
-db.pragma('foreign_keys = ON');
+function save() {
+  if (sqlDb) {
+    const data = sqlDb.export();
+    fs.writeFileSync(dbPath, Buffer.from(data));
+  }
+}
 
-function initialize() {
+const db = {
+  prepare(sql) {
+    return {
+      get(...params) {
+        const stmt = sqlDb.prepare(sql);
+        if (params.length > 0) stmt.bind(params);
+        let result = null;
+        if (stmt.step()) {
+          result = stmt.getAsObject();
+        }
+        stmt.free();
+        return result;
+      },
+      all(...params) {
+        const results = [];
+        const stmt = sqlDb.prepare(sql);
+        if (params.length > 0) stmt.bind(params);
+        while (stmt.step()) {
+          results.push(stmt.getAsObject());
+        }
+        stmt.free();
+        return results;
+      },
+      run(...params) {
+        sqlDb.run(sql, params);
+        const res = sqlDb.exec("SELECT last_insert_rowid()");
+        const lastInsertRowid = res.length > 0 ? res[0].values[0][0] : 0;
+        const changes = sqlDb.getRowsModified();
+        if (!inTransaction) save();
+        return { lastInsertRowid, changes };
+      }
+    };
+  },
+
+  exec(sql) {
+    sqlDb.exec(sql);
+    if (!inTransaction) save();
+  },
+
+  transaction(fn) {
+    return (...args) => {
+      sqlDb.run('BEGIN');
+      inTransaction = true;
+      try {
+        const result = fn(...args);
+        sqlDb.run('COMMIT');
+        inTransaction = false;
+        save();
+        return result;
+      } catch (err) {
+        sqlDb.run('ROLLBACK');
+        inTransaction = false;
+        throw err;
+      }
+    };
+  }
+};
+
+async function initialize() {
+  const SQL = await initSqlJs();
+
+  if (fs.existsSync(dbPath)) {
+    const buffer = fs.readFileSync(dbPath);
+    sqlDb = new SQL.Database(buffer);
+  } else {
+    sqlDb = new SQL.Database();
+  }
+
+  sqlDb.run('PRAGMA foreign_keys = ON');
+
   db.exec(`
     CREATE TABLE IF NOT EXISTS categories (
       id INTEGER PRIMARY KEY AUTOINCREMENT,

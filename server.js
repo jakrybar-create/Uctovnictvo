@@ -8,9 +8,6 @@ const { db, initialize } = require('./database');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Initialize database
-initialize();
-
 // Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -319,6 +316,11 @@ app.use((err, req, res, next) => {
   next();
 });
 
-app.listen(PORT, () => {
-  console.log(`Účtovníctvo server beží na http://localhost:${PORT}`);
+initialize().then(() => {
+  app.listen(PORT, () => {
+    console.log(`Účtovníctvo server beží na http://localhost:${PORT}`);
+  });
+}).catch(err => {
+  console.error('Chyba pri inicializácii databázy:', err);
+  process.exit(1);
 });
