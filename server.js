@@ -422,12 +422,15 @@ app.post('/api/journal-pdfs', journalUpload.single('file'), async (req, res) => 
 
   // Try to parse journal entries from PDF
   let parsedCount = 0;
+  let rawText = '';
+  let parsedEntries = [];
   try {
     const pdfBuffer = fs.readFileSync(path.join(journalsDir, req.file.filename));
     const pdfData = await pdfParse(pdfBuffer);
-    const entries = parseJournalPdf(pdfData.text, year);
+    rawText = pdfData.text;
+    parsedEntries = parseJournalPdf(pdfData.text, year);
 
-    if (entries.length > 0) {
+    if (parsedEntries.length > 0) {
       const insertEntry = db.transaction((rows) => {
         for (const entry of rows) {
           db.prepare(`
@@ -436,8 +439,8 @@ app.post('/api/journal-pdfs', journalUpload.single('file'), async (req, res) => 
           `).run(entry.date, entry.document_number, entry.description, entry.account_md, entry.account_d, entry.amount, entry.partner);
         }
       });
-      insertEntry(entries);
-      parsedCount = entries.length;
+      insertEntry(parsedEntries);
+      parsedCount = parsedEntries.length;
     }
   } catch (parseErr) {
     console.error('Chyba pri parsovaní PDF:', parseErr.message);
@@ -450,6 +453,8 @@ app.post('/api/journal-pdfs', journalUpload.single('file'), async (req, res) => 
     year,
     description,
     parsed_entries: parsedCount,
+    raw_text_preview: rawText.substring(0, 3000),
+    sample_parsed: parsedEntries.slice(0, 5),
   });
 });
 

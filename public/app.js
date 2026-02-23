@@ -696,6 +696,8 @@ function setupJournalPdfs() {
       } else {
         showToast('Účtovný denník bol nahraný (nepodarilo sa automaticky rozpoznať záznamy)');
       }
+      // Show debug info for PDF parsing
+      showPdfDebug(result);
       pendingFile = null;
       document.getElementById('journal-upload-form').style.display = 'none';
       document.getElementById('journal-file-input').value = '';
@@ -709,6 +711,46 @@ function setupJournalPdfs() {
 function showJournalUploadForm() {
   document.getElementById('journal-upload-form').style.display = '';
   document.getElementById('journal-pdf-desc').value = pendingFile ? `Účtovný denník - ${pendingFile.name}` : '';
+}
+
+function showPdfDebug(result) {
+  let debugEl = document.getElementById('pdf-debug');
+  if (!debugEl) {
+    debugEl = document.createElement('div');
+    debugEl.id = 'pdf-debug';
+    debugEl.className = 'document-form';
+    debugEl.style.marginTop = '1rem';
+    const section = document.getElementById('section-journal-pdfs');
+    section.appendChild(debugEl);
+  }
+
+  if (result.parsed_entries > 0) {
+    debugEl.innerHTML = `
+      <h3>Naimportované záznamy (${result.parsed_entries})</h3>
+      <p style="color:var(--success);margin-bottom:0.5rem">Úspešne naimportovaných ${result.parsed_entries} zápisov do denníka.</p>
+      ${result.sample_parsed && result.sample_parsed.length > 0 ? `
+        <p style="font-size:0.85rem;color:var(--text-light)">Ukážka prvých zápisov:</p>
+        <table class="data-table" style="margin-top:0.5rem">
+          <thead><tr><th>Dátum</th><th>Č. dokladu</th><th>Popis</th><th>MD</th><th>D</th><th>Suma</th></tr></thead>
+          <tbody>
+            ${result.sample_parsed.map(e => `<tr>
+              <td>${e.date}</td><td>${e.document_number || '-'}</td><td>${e.description || '-'}</td>
+              <td>${e.account_md}</td><td>${e.account_d}</td><td>${formatMoney(e.amount)}</td>
+            </tr>`).join('')}
+          </tbody>
+        </table>
+      ` : ''}
+    `;
+  } else {
+    debugEl.innerHTML = `
+      <h3>Výsledok parsovania PDF</h3>
+      <p style="color:var(--danger);margin-bottom:0.5rem">Nepodarilo sa automaticky rozpoznať záznamy z PDF.</p>
+      <p style="font-size:0.85rem;color:var(--text-light)">Extrahovaný text z PDF (prvých 3000 znakov):</p>
+      <pre style="background:#f1f5f9;padding:1rem;border-radius:8px;font-size:0.75rem;max-height:400px;overflow:auto;white-space:pre-wrap;word-break:break-all;margin-top:0.5rem">${(result.raw_text_preview || 'Žiadny text sa nepodarilo extrahovať z PDF.').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</pre>
+      <p style="font-size:0.8rem;color:var(--text-light);margin-top:0.5rem">Skontrolujte, či PDF obsahuje čitateľný text (nie skenovaný obrázok). Záznamy môžete pridať manuálne v sekcii Účtovný denník.</p>
+    `;
+  }
+  debugEl.style.display = '';
 }
 
 async function loadJournalPdfs() {
