@@ -53,6 +53,8 @@ function setupNavigation() {
       if (section === 'documents') loadDocuments();
       if (section === 'journal') loadJournal();
       if (section === 'journal-pdfs') loadJournalPdfs();
+      if (section === 'balance-sheet') loadBalanceSheet();
+      if (section === 'profit-loss') loadProfitLoss();
       if (section === 'categories') renderCategories();
 
       window.scrollTo(0, 0);
@@ -127,6 +129,8 @@ function setupMobileNav() {
       if (section === 'documents') loadDocuments();
       if (section === 'journal') loadJournal();
       if (section === 'journal-pdfs') loadJournalPdfs();
+      if (section === 'balance-sheet') loadBalanceSheet();
+      if (section === 'profit-loss') loadProfitLoss();
       if (section === 'categories') renderCategories();
 
       // Scroll to top
@@ -161,7 +165,7 @@ function navigateToSection(section) {
 // ============ Year selectors ============
 function setupYearSelectors() {
   const currentYear = new Date().getFullYear();
-  const selectors = ['stats-year', 'journal-year', 'journal-pdf-year'];
+  const selectors = ['stats-year', 'journal-year', 'journal-pdf-year', 'bs-year', 'pl-year'];
 
   selectors.forEach(id => {
     const select = document.getElementById(id);
@@ -686,8 +690,12 @@ function setupJournalPdfs() {
     formData.append('description', document.getElementById('journal-pdf-desc').value);
 
     try {
-      await apiUpload('/api/journal-pdfs', formData);
-      showToast('Účtovný denník bol nahraný');
+      const result = await apiUpload('/api/journal-pdfs', formData);
+      if (result.parsed_entries > 0) {
+        showToast(`Účtovný denník nahraný - naimportovaných ${result.parsed_entries} zápisov`);
+      } else {
+        showToast('Účtovný denník bol nahraný (nepodarilo sa automaticky rozpoznať záznamy)');
+      }
       pendingFile = null;
       document.getElementById('journal-upload-form').style.display = 'none';
       document.getElementById('journal-file-input').value = '';
@@ -801,6 +809,106 @@ async function deleteCategory(id) {
     showToast(err.message, 'error');
   }
 }
+
+// ============ Súvaha (Balance Sheet) ============
+async function loadBalanceSheet() {
+  const year = document.getElementById('bs-year').value;
+  try {
+    const data = await api(`/api/balance-sheet?year=${year}`);
+    const aktivaTbody = document.getElementById('aktiva-tbody');
+    const pasivaTbody = document.getElementById('pasiva-tbody');
+    const empty = document.getElementById('bs-empty');
+
+    if (data.aktiva.length === 0 && data.pasiva.length === 0) {
+      aktivaTbody.innerHTML = '';
+      pasivaTbody.innerHTML = '';
+      empty.style.display = '';
+      document.querySelector('.financial-statements')?.closest('#section-balance-sheet')?.querySelector('.financial-statements')?.style && (document.querySelector('#section-balance-sheet .financial-statements').style.display = 'none');
+      return;
+    }
+
+    empty.style.display = 'none';
+    const fsEl = document.querySelector('#section-balance-sheet .financial-statements');
+    if (fsEl) fsEl.style.display = '';
+
+    aktivaTbody.innerHTML = data.aktiva.map(a => `
+      <tr>
+        <td><strong>${a.account}</strong></td>
+        <td>${a.name}</td>
+        <td style="text-align:right" class="${a.balance < 0 ? 'negative' : ''}">${formatMoney(a.balance)}</td>
+      </tr>
+    `).join('');
+
+    pasivaTbody.innerHTML = data.pasiva.map(p => `
+      <tr>
+        <td><strong>${p.account}</strong></td>
+        <td>${p.name}</td>
+        <td style="text-align:right" class="${p.balance < 0 ? 'negative' : ''}">${formatMoney(p.balance)}</td>
+      </tr>
+    `).join('');
+
+    document.getElementById('aktiva-total').textContent = formatMoney(data.aktivaTotal);
+    document.getElementById('pasiva-total').textContent = formatMoney(data.pasivaTotal);
+  } catch (err) {
+    showToast(err.message, 'error');
+  }
+}
+
+document.getElementById('bs-year')?.addEventListener('change', loadBalanceSheet);
+
+// ============ Výkaz ziskov a strát (P&L) ============
+async function loadProfitLoss() {
+  const year = document.getElementById('pl-year').value;
+  try {
+    const data = await api(`/api/profit-loss?year=${year}`);
+    const nakladyTbody = document.getElementById('naklady-tbody');
+    const vynosyTbody = document.getElementById('vynosy-tbody');
+    const empty = document.getElementById('pl-empty');
+    const profitResult = document.getElementById('profit-result');
+
+    if (data.naklady.length === 0 && data.vynosy.length === 0) {
+      nakladyTbody.innerHTML = '';
+      vynosyTbody.innerHTML = '';
+      empty.style.display = '';
+      profitResult.style.display = 'none';
+      const fsEl = document.querySelector('#section-profit-loss .financial-statements');
+      if (fsEl) fsEl.style.display = 'none';
+      return;
+    }
+
+    empty.style.display = 'none';
+    profitResult.style.display = '';
+    const fsEl = document.querySelector('#section-profit-loss .financial-statements');
+    if (fsEl) fsEl.style.display = '';
+
+    nakladyTbody.innerHTML = data.naklady.map(n => `
+      <tr>
+        <td><strong>${n.account}</strong></td>
+        <td>${n.name}</td>
+        <td style="text-align:right">${formatMoney(n.balance)}</td>
+      </tr>
+    `).join('');
+
+    vynosyTbody.innerHTML = data.vynosy.map(v => `
+      <tr>
+        <td><strong>${v.account}</strong></td>
+        <td>${v.name}</td>
+        <td style="text-align:right">${formatMoney(v.balance)}</td>
+      </tr>
+    `).join('');
+
+    document.getElementById('naklady-total').textContent = formatMoney(data.nakladyTotal);
+    document.getElementById('vynosy-total').textContent = formatMoney(data.vynosyTotal);
+
+    const profitEl = document.getElementById('pl-profit');
+    profitEl.textContent = formatMoney(data.vysledok);
+    profitEl.className = 'profit-value ' + (data.vysledok >= 0 ? 'profit-positive' : 'profit-negative');
+  } catch (err) {
+    showToast(err.message, 'error');
+  }
+}
+
+document.getElementById('pl-year')?.addEventListener('change', loadProfitLoss);
 
 // ============ Helpers ============
 function formatMoney(amount) {

@@ -41,6 +41,12 @@
       <li><a href="#" class="nav-link" data-section="journal-pdfs">
         <span class="icon">&#128451;</span> Archív denníkov
       </a></li>
+      <li><a href="#" class="nav-link" data-section="balance-sheet">
+        <span class="icon">&#9878;</span> Súvaha
+      </a></li>
+      <li><a href="#" class="nav-link" data-section="profit-loss">
+        <span class="icon">&#128200;</span> Výkaz ziskov a strát
+      </a></li>
       <li><a href="#" class="nav-link" data-section="categories">
         <span class="icon">&#9881;</span> Kategórie
       </a></li>
@@ -287,7 +293,7 @@
     <!-- Journal PDFs archive -->
     <section id="section-journal-pdfs" class="section">
       <h2>Archív účtovných denníkov (PDF)</h2>
-      <p class="section-desc">Nahrajte PDF účtovných denníkov z minulých rokov pre archiváciu.</p>
+      <p class="section-desc">Nahrajte PDF účtovných denníkov - systém automaticky rozpozná a naimportuje záznamy.</p>
       <div class="upload-area" id="journal-upload-area">
         <div class="upload-icon">&#128451;</div>
         <p>Pretiahnite PDF súbor sem alebo kliknite</p>
@@ -327,6 +333,125 @@
         </table>
       </div>
       <p class="empty-state" id="journal-pdfs-empty" style="display:none">Zatiaľ neboli nahrané žiadne denníky.</p>
+    </section>
+
+    <!-- Súvaha (Balance Sheet) -->
+    <section id="section-balance-sheet" class="section">
+      <h2>Súvaha</h2>
+      <div class="year-selector">
+        <label>Rok: </label>
+        <select id="bs-year"></select>
+      </div>
+
+      <div class="financial-statements">
+        <div class="fs-column">
+          <h3 class="fs-title aktiva-title">Aktíva</h3>
+          <div class="table-wrapper">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Účet</th>
+                  <th>Názov</th>
+                  <th style="text-align:right">Suma (€)</th>
+                </tr>
+              </thead>
+              <tbody id="aktiva-tbody"></tbody>
+              <tfoot>
+                <tr class="total-row">
+                  <td colspan="2"><strong>Aktíva spolu</strong></td>
+                  <td style="text-align:right"><strong id="aktiva-total">0,00 €</strong></td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        </div>
+
+        <div class="fs-column">
+          <h3 class="fs-title pasiva-title">Pasíva</h3>
+          <div class="table-wrapper">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Účet</th>
+                  <th>Názov</th>
+                  <th style="text-align:right">Suma (€)</th>
+                </tr>
+              </thead>
+              <tbody id="pasiva-tbody"></tbody>
+              <tfoot>
+                <tr class="total-row">
+                  <td colspan="2"><strong>Pasíva spolu</strong></td>
+                  <td style="text-align:right"><strong id="pasiva-total">0,00 €</strong></td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        </div>
+      </div>
+      <p class="empty-state" id="bs-empty" style="display:none">Žiadne údaje pre zostavenie súvahy. Nahrajte účtovný denník.</p>
+    </section>
+
+    <!-- Výkaz ziskov a strát (P&L) -->
+    <section id="section-profit-loss" class="section">
+      <h2>Výkaz ziskov a strát</h2>
+      <div class="year-selector">
+        <label>Rok: </label>
+        <select id="pl-year"></select>
+      </div>
+
+      <div class="financial-statements">
+        <div class="fs-column">
+          <h3 class="fs-title naklady-title">Náklady</h3>
+          <div class="table-wrapper">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Účet</th>
+                  <th>Názov</th>
+                  <th style="text-align:right">Suma (€)</th>
+                </tr>
+              </thead>
+              <tbody id="naklady-tbody"></tbody>
+              <tfoot>
+                <tr class="total-row">
+                  <td colspan="2"><strong>Náklady spolu</strong></td>
+                  <td style="text-align:right"><strong id="naklady-total">0,00 €</strong></td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        </div>
+
+        <div class="fs-column">
+          <h3 class="fs-title vynosy-title">Výnosy</h3>
+          <div class="table-wrapper">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Účet</th>
+                  <th>Názov</th>
+                  <th style="text-align:right">Suma (€)</th>
+                </tr>
+              </thead>
+              <tbody id="vynosy-tbody"></tbody>
+              <tfoot>
+                <tr class="total-row">
+                  <td colspan="2"><strong>Výnosy spolu</strong></td>
+                  <td style="text-align:right"><strong id="vynosy-total">0,00 €</strong></td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="profit-result" id="profit-result" style="display:none">
+        <div class="profit-result-inner">
+          <span class="profit-label">Výsledok hospodárenia:</span>
+          <span class="profit-value" id="pl-profit">0,00 €</span>
+        </div>
+      </div>
+      <p class="empty-state" id="pl-empty" style="display:none">Žiadne údaje pre zostavenie výkazu. Nahrajte účtovný denník.</p>
     </section>
 
     <!-- Categories management -->

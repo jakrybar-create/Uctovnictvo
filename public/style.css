@@ -632,6 +632,80 @@ body {
   font-weight: 600;
 }
 
+/* Financial statements */
+.financial-statements {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.fs-column {
+  min-width: 0;
+}
+
+.fs-title {
+  font-size: 1.1rem;
+  margin-bottom: 0.75rem;
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius);
+  color: #fff;
+}
+
+.aktiva-title {
+  background: #2563eb;
+}
+
+.pasiva-title {
+  background: #7c3aed;
+}
+
+.naklady-title {
+  background: #dc2626;
+}
+
+.vynosy-title {
+  background: #16a34a;
+}
+
+.negative {
+  color: var(--danger);
+}
+
+.profit-result {
+  margin-top: 1.5rem;
+  text-align: center;
+}
+
+.profit-result-inner {
+  display: inline-flex;
+  align-items: center;
+  gap: 1rem;
+  background: var(--card);
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1rem 2rem;
+}
+
+.profit-label {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.profit-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.profit-positive {
+  color: var(--success);
+}
+
+.profit-negative {
+  color: var(--danger);
+}
+
 /* Mobile card view for tables */
 .mobile-card {
   display: none;
@@ -868,6 +942,23 @@ body {
   /* Section description */
   .section-desc {
     font-size: 0.85rem;
+  }
+
+  /* Financial statements */
+  .financial-statements {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .profit-result-inner {
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 1rem;
+    width: 100%;
+  }
+
+  .profit-value {
+    font-size: 1.3rem;
   }
 
   /* Journal controls */
